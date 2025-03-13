@@ -1,0 +1,95 @@
+#services:
+#  mongo:
+#    image: mongo:latest
+#    container_name: mongo-rs
+#    restart: always
+#    ports:
+#      - "27017:27017"
+#    command: ["mongod", "--replSet", "rs0"]
+#    volumes:
+#      - mongo-data:/data/db
+#
+#  mongo-init:
+#    image: mongo:latest
+#    depends_on:
+#      - mongo
+#    entrypoint: [ "bash", "/scripts/init-mongo.sh" ]
+#    volumes:
+#      - ./scripts:/scripts
+#
+#  server:
+#    build: ./server
+#    container_name: messaging-server
+#    restart: always
+#    ports:
+#      - "5000:5000"
+#      - "5001:5001"
+#    depends_on:
+#      mongo-init:
+#        condition: service_completed_successfully
+#    environment:
+#      - PORT=5000
+#      - WS_PORT=5001
+#      - MONGO_URI=mongodb://mongo:27017/messaging-app?replicaSet=rs0
+#
+#  client:
+#    build: ./client
+#    container_name: messaging-client
+#    restart: always
+#    ports:
+#      - "8080:80"
+#    depends_on:
+#      - server
+#    environment:
+#      - VITE_API_URL=http://localhost:5000
+#
+#volumes:
+#  mongo-data:
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo-rs
+    restart: always
+    ports:
+      - "27017:27017"
+    command: ["mongod", "--replSet", "rs0"]
+    volumes:
+      - mongo-data:/data/db
+
+  mongo-init:
+    image: mongo:latest
+    depends_on:
+      - mongo
+    entrypoint: [ "bash", "/scripts/init-mongo.sh" ]
+    volumes:
+      - ./scripts:/scripts
+
+  server:
+    build: ./server
+    container_name: messaging-server
+    restart: always
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+    environment:
+      - PORT=5000
+      - WS_PORT=5001
+      - MONGO_URI=mongodb://mongo:27017/messaging-app?replicaSet=rs0
+
+  client:
+    build: ./client
+    container_name: messaging-client
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+    environment:
+      - VITE_API_URL=http://localhost:5000
+
+volumes:
+  mongo-data:
